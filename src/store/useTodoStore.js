@@ -1,53 +1,40 @@
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { defineStore } from "pinia";
 import useTodoApi from "../service/useTodoApi";
-export const useTodoStore = defineStore("todos", () => {
-  const todayTasks = ref([]);
-  const tomorrowTasks = ref([]);
-  const otherTasks = ref([]);
+const useTodoStore = defineStore("todos", () => {
   const allTasks = ref([]);
-
-  const getAllTodos = () => {
-    useTodoApi.getAll().then((res) => {
-      allTasks.value = res.data;
-    });
+  const addTodo = (todo) => {
+    allTasks.value.push(todo);
   };
-  todayTasks.value = computed(() => {
+  const todayTasks = computed(() => {
     return allTasks.value.filter((el) => el.category === "today");
   });
 
-  tomorrowTasks.value = computed(() => {
-    return allTasks.value.filter((el) => el.category === "today");
-  });
-  otherTasks.value = computed(() => {
-    return allTasks.value.filter((el) => el.category === "today");
+  const tomorrowTasks = computed(() => {
+    return allTasks.value.filter((el) => el.category === "tomorrow");
   });
 
-  const addTodayTask = (data) => {
-    useTodoApi.addTodo(data);
-    todayTasks.value = [...todayTasks.value, data];
-  };
-  const addTomorrowTask = (data) => {
-    useTodoApi.addTodo(data);
-    tomorrowTasks.value = [...todayTasks.value, data];
-  };
-  const addOtherTask = (data) => {
-    useTodoApi.addTodo(data);
-    otherTasks.value = [...todayTasks.value, data];
+  const otherTasks = computed(() => {
+    return allTasks.value.filter((el) => el.category === "others");
+  });
+  const fetchTodos = async () => {
+    try {
+      const response = await useTodoApi.getAll();
+      allTasks.value = response.data;
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
   };
   onMounted(() => {
-    getAllTodos();
-    console.log(todayTasks.value);
-    console.log(tomorrowTasks.value);
-    console.log(otherTasks.value);
+    fetchTodos();
   });
-
   return {
     todayTasks,
     otherTasks,
     tomorrowTasks,
-    addTodayTask,
-    addTomorrowTask,
-    addOtherTask,
+    addTodo,
+    fetchTodos,
   };
 });
+
+export default useTodoStore;

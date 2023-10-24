@@ -1,19 +1,16 @@
 <script setup>
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
+import useTodoStore from "./store/useTodoStore";
+import TaskItem from "./components/TaskItem.vue";
 import useTodoApi from "./service/useTodoApi";
-import { useTodoStore } from "./store/useTodoStore";
-import { storeToRefs } from "pinia";
+
 const inputVal = ref("");
-const todos = useTodoStore();
-const { todayTasks, otherTasks, tomorrowTasks } = storeToRefs(todos);
-const { addTodayTask, addTomorrowTask, addOtherTask } = todos;
-onMounted(() => {
-  console.log(todayTasks);
-  console.log(otherTasks);
-  console.log(tomorrowTasks);
-});
+const store = useTodoStore();
+const { todayTasks, otherTasks, tomorrowTasks } = storeToRefs(store);
+const { addTodo } = store;
 const addTodoFunc = () => {
   if (inputVal.value.trim().length > 0) {
     const regexExp = new RegExp(
@@ -32,7 +29,9 @@ const addTodoFunc = () => {
       if (result.includes("!muhim")) {
         newTodo.priority = "high";
       }
-      addTodayTask(newTodo);
+      addTodo(newTodo);
+      useTodoApi.addTodo(newTodo);
+      // todos.today.push(newTodo);
     } else if (inputVal.value.toLowerCase().includes("ertaga")) {
       let result = inputVal.value.replace("ertaga", "");
       newTodo.title = result;
@@ -40,7 +39,8 @@ const addTodoFunc = () => {
       if (result.includes("!muhim")) {
         newTodo.priority = "high";
       }
-      addTomorrowTask(newTodo);
+      addTodo(newTodo);
+      useTodoApi.addTodo(newTodo);
     } else if (
       inputVal.value
         .toLowerCase()
@@ -57,15 +57,16 @@ const addTodoFunc = () => {
       if (result.includes("!muhim")) {
         newTodo.priority = "high";
       }
-      addOtherTask(newTodo);
+      addTodo(newTodo);
+      useTodoApi.addTodo(newTodo);
     } else {
       if (inputVal.value.includes("!muhim")) {
         newTodo.priority = "high";
       }
-      addTodayTask(newTodo);
+      addTodo(newTodo);
+      useTodoApi.addTodo(newTodo);
     }
     console.log(newTodo);
-    useTodoApi.addTodo(newTodo);
 
     inputVal.value = "";
   } else {
@@ -96,40 +97,49 @@ const addTodoFunc = () => {
       <div class="wrapper mt-10 flex justify-between">
         <div class="w-[48%] bg-blue-500 h-full p-4 rounded-2xl">
           <h2 class="text-[24px] text-white">Today</h2>
-          <ul class="list-none flex flex-col gap-1">
-            <!-- {todayTasks.length > 0 ? (
-                todayTasks.map((todo, index) => {
-                  return <TaskItem state={todo} key={index} />;
-                })
-              ) : (
-                <h1 class="text-[16px] text-white">Hozircha bo'sh</h1>
-              )} -->
+          <ul v-if="todayTasks.length" class="list-none flex flex-col gap-1">
+            <TaskItem
+              v-for="task in todayTasks"
+              :priority="task.priority"
+              :isFinished="task.isFinished"
+              :id="task.id"
+              :title="task.title"
+              :key="task.id"
+            />
           </ul>
+          <h1 v-else class="text-[16px] text-white">Hozircha bo'sh</h1>
         </div>
         <div class="w-[48%] h-fit">
           <div class="w-full bg-blue-500 h-full p-4 rounded-2xl">
             <h2 class="text-[24px] text-white">Tomorrow</h2>
-            <ul class="list-none flex flex-col gap-1">
-              <!-- {tomorrowTasks.length > 0 ? (
-                  tomorrowTasks.map((todo, index) => {
-                    return <TaskItem state={todo} key={index} />;
-                  })
-                ) : (
-                  <h1 class="text-[16px] text-white">Hozircha bo'sh</h1>
-                )} -->
+            <ul
+              v-if="tomorrowTasks.length"
+              class="list-none flex flex-col gap-1"
+            >
+              <TaskItem
+                v-for="task in tomorrowTasks"
+                :priority="task.priority"
+                :isFinished="task.isFinished"
+                :id="task.id"
+                :title="task.title"
+                :key="task.id"
+              />
             </ul>
+            <h1 v-else class="text-[16px] text-white">Hozircha bo'sh</h1>
           </div>
           <div class="w-full bg-blue-500 h-full p-4 rounded-2xl mt-4">
             <h2 class="text-[24px] text-white">Others</h2>
-            <ul class="list-none flex flex-col gap-1">
-              <!-- {othersTasks.length > 0 ? (
-                  othersTasks.map((todo, index) => {
-                    return <TaskItem state={todo} key={index} />;
-                  })
-                ) : (
-                  <h1 class="text-[16px] text-white">Hozircha bo'sh</h1>
-                )} -->
+            <ul v-if="otherTasks.length" class="list-none flex flex-col gap-1">
+              <TaskItem
+                v-for="task in otherTasks"
+                :priority="task.priority"
+                :isFinished="task.isFinished"
+                :id="task.id"
+                :title="task.title"
+                :key="task.id"
+              />
             </ul>
+            <h1 v-else class="text-[16px] text-white">Hozircha bo'sh</h1>
           </div>
         </div>
       </div>
